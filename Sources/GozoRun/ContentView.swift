@@ -14,6 +14,15 @@ struct ContentView: View {
             MapView(viewModel: runTracker)
                 .ignoresSafeArea()
 
+            // Elevation chart (floating above HUD)
+            VStack {
+                Spacer()
+                ElevationChartView(viewModel: runTracker)
+                    .environmentObject(themeManager)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, hudExpanded ? 320 : 80)
+            }
+
             // Stats HUD
             VStack(spacing: 0) {
                 // Drag handle / collapse toggle
@@ -45,10 +54,8 @@ struct ContentView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(countdownText)
-                                .font(.caption)
-                                .foregroundStyle(themeManager.selectedTheme.accentColor)
-                                .multilineTextAlignment(.trailing)
+                            CountdownView(raceDate: raceSession.startDate)
+                                .environmentObject(themeManager)
                         }
 
                         Divider().opacity(0.3)
@@ -112,23 +119,6 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Countdown
-
-    private var countdownText: String {
-        let now = Date()
-        let diff = raceSession.startDate.timeIntervalSince(now)
-        if diff <= 0 {
-            return "Race is live! 🏃"
-        }
-        let totalSeconds = Int(diff)
-        let d = totalSeconds / 86400
-        let h = (totalSeconds % 86400) / 3600
-        let m = (totalSeconds % 3600) / 60
-        if d > 0 {
-            return "\(d)d \(h)h \(m)m to race"
-        }
-        return "\(h)h \(m)m to start"
-    }
 }
 
 // MARK: - Stat cell

@@ -18,6 +18,7 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
 
     // GPX data
     @Published var routeCoordinates: [CLLocationCoordinate2D] = []
+    @Published var routeElevations: [Double] = []   // parallel array to routeCoordinates
     @Published var kmMarkers: [KmMarker] = []
     @Published var waterStations: [WaterStation] = []
 
@@ -82,6 +83,7 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
                 let result = GPXParser.parse(url: url)
                 DispatchQueue.main.async {
                     self.routeCoordinates = result.trackPoints
+                    self.routeElevations = result.elevations
                     self.kmMarkers = result.kmMarkers
                     self.waterStations = result.waterStations
                 }

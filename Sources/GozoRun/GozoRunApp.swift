@@ -23,7 +23,7 @@ struct GozoRunApp: App {
     var body: some Scene {
         WindowGroup {
             TabView {
-                // Main tracker tab — full-screen map + HUD
+                // Main tracker tab — full-screen map + HUD + countdown
                 ContentView(runTracker: runTracker, raceSession: raceSession)
                     .environmentObject(themeManager)
                     .tabItem { Label("Track", systemImage: "figure.run") }
