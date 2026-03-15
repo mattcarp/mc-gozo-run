@@ -15,7 +15,10 @@ let package = Package(
     targets: [
         .target(
             name: "GozoRun",
-            path: "Sources/GozoRun"
+            path: "Sources/GozoRun",
+            resources: [
+                .copy("Info.plist")
+            ]
         )
     ]
 )

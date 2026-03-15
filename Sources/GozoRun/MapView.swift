@@ -3,50 +3,111 @@ import MapKit
 
 struct MapView: View {
     @ObservedObject var viewModel: RunTrackerViewModel
+    @EnvironmentObject var themeManager: ThemeManager
 
     @State private var cameraPosition: MapCameraPosition = .region(
         MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 36.0505, longitude: 14.2678),
-            span: MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
+            center: CLLocationCoordinate2D(latitude: 36.0560, longitude: 14.2500),
+            span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         )
     )
+    @State private var followRunner = true
 
-    private let placeholderRoute: [CLLocationCoordinate2D] = [
-        CLLocationCoordinate2D(latitude: 36.0505, longitude: 14.2678),
-        CLLocationCoordinate2D(latitude: 36.0561, longitude: 14.2739),
-        CLLocationCoordinate2D(latitude: 36.0632, longitude: 14.2686),
-        CLLocationCoordinate2D(latitude: 36.0588, longitude: 14.2599),
-        CLLocationCoordinate2D(latitude: 36.0505, longitude: 14.2678)
-    ]
+    private let startCoord = CLLocationCoordinate2D(latitude: 36.050042, longitude: 14.264673)
 
     var body: some View {
-        Map(position: $cameraPosition) {
-            MapPolyline(coordinates: placeholderRoute)
-                .stroke(.orange, lineWidth: 5)
+        ZStack(alignment: .topTrailing) {
+            Map(position: $cameraPosition) {
 
-            Annotation("Runner", coordinate: viewModel.runnerCoordinate) {
-                Circle()
-                    .fill(.red)
-                    .frame(width: 16, height: 16)
-                    .overlay(Circle().stroke(.white, lineWidth: 2))
-            }
+                // Route polyline
+                if !viewModel.routeCoordinates.isEmpty {
+                    MapPolyline(coordinates: viewModel.routeCoordinates)
+                        .stroke(themeManager.selectedTheme.accentColor, lineWidth: 4)
+                }
 
-            ForEach(viewModel.spectatorLocations) { spectator in
-                Annotation(spectator.name, coordinate: spectator.coordinate) {
+                // Start / Finish
+                Annotation("Start / Finish", coordinate: startCoord) {
+                    Image(systemName: "flag.checkered")
+                        .foregroundStyle(.yellow)
+                        .font(.title2)
+                        .background(Circle().fill(.black.opacity(0.6)).frame(width: 32, height: 32))
+                }
+
+                // KM markers
+                ForEach(viewModel.kmMarkers) { marker in
+                    Annotation("\(marker.kilometer)km", coordinate: marker.coordinate) {
+                        ZStack {
+                            Circle()
+                                .fill(themeManager.selectedTheme.accentColor)
+                                .frame(width: 22, height: 22)
+                            Text("\(marker.kilometer)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.black)
+                        }
+                    }
+                }
+
+                // Water stations
+                ForEach(viewModel.waterStations) { station in
+                    Annotation("Water", coordinate: station.coordinate) {
+                        Image(systemName: "drop.fill")
+                            .foregroundStyle(.blue)
+                            .font(.callout)
+                            .background(Circle().fill(.white).frame(width: 22, height: 22))
+                    }
+                }
+
+                // Runner dot
+                Annotation("You", coordinate: viewModel.runnerCoordinate) {
                     Circle()
-                        .fill(.blue)
-                        .frame(width: 12, height: 12)
+                        .fill(.red)
+                        .frame(width: 16, height: 16)
+                        .overlay(Circle().stroke(.white, lineWidth: 2))
+                        .shadow(radius: 3)
+                }
+
+                // Spectators
+                ForEach(viewModel.spectatorLocations) { spectator in
+                    Annotation(spectator.name, coordinate: spectator.coordinate) {
+                        Image(systemName: "person.fill")
+                            .foregroundStyle(.white)
+                            .font(.caption)
+                            .background(Circle().fill(.indigo).frame(width: 22, height: 22))
+                    }
                 }
             }
-        }
-        .mapStyle(.hybrid(elevation: .realistic))
-        .onAppear {
-            cameraPosition = .region(
-                MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(latitude: 36.0505, longitude: 14.2678),
-                    span: MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
-                )
-            )
+            .mapStyle(.hybrid(elevation: .realistic))
+            .onChange(of: viewModel.runnerCoordinate.latitude) { _, _ in
+                if followRunner {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        cameraPosition = .region(MKCoordinateRegion(
+                            center: viewModel.runnerCoordinate,
+                            span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
+                        ))
+                    }
+                }
+            }
+
+            // Follow toggle
+            Button {
+                followRunner.toggle()
+                if followRunner {
+                    withAnimation {
+                        cameraPosition = .region(MKCoordinateRegion(
+                            center: viewModel.runnerCoordinate,
+                            span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
+                        ))
+                    }
+                }
+            } label: {
+                Image(systemName: followRunner ? "location.fill" : "location")
+                    .foregroundStyle(followRunner ? themeManager.selectedTheme.accentColor : .white)
+                    .padding(10)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+                    .padding(.trailing, 12)
+                    .padding(.top, 12)
+            }
         }
     }
 }

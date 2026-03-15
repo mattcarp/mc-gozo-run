@@ -5,79 +5,86 @@ import CoreLocation
 struct GozoRunApp: App {
     @StateObject private var runTracker = RunTrackerViewModel()
     @StateObject private var themeManager = ThemeManager()
-    private let voiceAlertManager = VoiceAlertManager()
 
     private let raceSession: RunSession = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/Malta") ?? .current
-        let startDate = calendar.date(from: DateComponents(year: 2026, month: 4, day: 26, hour: 7, minute: 30)) ?? Date()
-
+        let startDate = calendar.date(from: DateComponents(
+            year: 2026, month: 4, day: 26, hour: 7, minute: 30
+        )) ?? Date()
         return RunSession(
-            raceName: "Gozo Half Marathon (Il-Girja t'Ghawdex)",
+            raceName: "Gozo Half Marathon (Il-Girja t'Għawdex)",
             startDate: startDate,
-            startCoordinate: CLLocationCoordinate2D(latitude: 36.0505, longitude: 14.2678),
+            startCoordinate: CLLocationCoordinate2D(latitude: 36.050042, longitude: 14.264673),
             totalDistanceKm: 21.1
         )
     }()
 
     var body: some Scene {
         WindowGroup {
-            VStack(spacing: 0) {
+            TabView {
+                // Main tracker tab — full-screen map + HUD
                 ContentView(runTracker: runTracker, raceSession: raceSession)
+                    .environmentObject(themeManager)
+                    .tabItem { Label("Track", systemImage: "figure.run") }
 
-                TabView {
-                    MapView(viewModel: runTracker)
-                        .tabItem {
-                            Label("Map", systemImage: "map")
-                        }
+                // KM splits log
+                SplitsView(runTracker: runTracker)
+                    .environmentObject(themeManager)
+                    .tabItem { Label("Splits", systemImage: "list.number") }
 
-                    SpectatorView(viewModel: runTracker)
-                        .tabItem {
-                            Label("Spectators", systemImage: "person.3")
-                        }
+                // Spectator mode
+                SpectatorView(viewModel: runTracker)
+                    .environmentObject(themeManager)
+                    .tabItem { Label("Spectate", systemImage: "eye") }
 
-                    alertsView
-                        .tabItem {
-                            Label("Alerts", systemImage: "bell")
-                        }
-
-                    SettingsView(viewModel: runTracker)
-                        .environmentObject(themeManager)
-                        .tabItem {
-                            Label("Settings", systemImage: "gearshape")
-                        }
-                }
+                // Settings
+                SettingsView(viewModel: runTracker)
+                    .environmentObject(themeManager)
+                    .tabItem { Label("Settings", systemImage: "gearshape") }
             }
-            .preferredColorScheme(themeManager.selectedTheme.colorScheme)
             .tint(themeManager.selectedTheme.accentColor)
-            .background(themeManager.selectedTheme.backgroundColor.ignoresSafeArea())
-            .onAppear {
-                runTracker.startTracking()
-            }
-            .onDisappear {
-                runTracker.stopTracking()
-            }
-            .onChange(of: runTracker.distanceMeters) { _, distance in
-                voiceAlertManager.announceSplitIfNeeded(
-                    distanceMeters: distance,
-                    elapsed: runTracker.elapsedTime,
-                    enabled: runTracker.voiceEnabled
-                )
-            }
+            .preferredColorScheme(themeManager.selectedTheme.colorScheme)
         }
     }
+}
 
-    private var alertsView: some View {
+// MARK: - Splits tab
+
+struct SplitsView: View {
+    @ObservedObject var runTracker: RunTrackerViewModel
+    @EnvironmentObject var themeManager: ThemeManager
+
+    var body: some View {
         NavigationStack {
-            List(runTracker.kmSplits) { split in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("KM \(split.kilometer)")
-                        .font(.headline)
-                    Text("Elapsed: \(formatTime(split.elapsedTime))")
-                    Text(String(format: "Avg pace: %.2f min/km", split.paceMinPerKm))
+            Group {
+                if runTracker.kmSplits.isEmpty {
+                    ContentUnavailableView(
+                        "No splits yet",
+                        systemImage: "figure.run.circle",
+                        description: Text("Start your run to record KM splits.")
+                    )
+                } else {
+                    List(runTracker.kmSplits) { split in
+                        HStack {
+                            Text("KM \(split.kilometer)")
+                                .font(.headline)
+                                .foregroundStyle(themeManager.selectedTheme.accentColor)
+                                .frame(width: 60, alignment: .leading)
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(formatTime(split.elapsedTime))
+                                    .font(.system(.body, design: .monospaced))
+                                Text(String(format: "%.2f min/km", split.paceMinPerKm))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
                 }
             }
-            .navigationTitle("Alerts")
+            .navigationTitle("KM Splits")
         }
     }
 
