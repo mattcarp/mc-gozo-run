@@ -21,6 +21,7 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
     @Published var routeElevations: [Double] = []   // parallel array to routeCoordinates
     @Published var kmMarkers: [KmMarker] = []
     @Published var waterStations: [WaterStation] = []
+    @Published var pointsOfInterest: [PointOfInterest] = []
 
     // MARK: - Private
 
@@ -80,6 +81,7 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
             self.routeElevations = result.elevations
             self.kmMarkers = result.kmMarkers
             self.waterStations = result.waterStations
+            self.pointsOfInterest = result.pointsOfInterest
         }
     }
 

@@ -57,6 +57,13 @@ struct MapView: View {
                     }
                 }
 
+                // Points of Interest (toilets, first aid, parking, music, marshals, turn directions)
+                ForEach(viewModel.pointsOfInterest) { poi in
+                    Annotation(poi.detail.isEmpty ? poi.name : poi.detail, coordinate: poi.coordinate) {
+                        poiIcon(for: poi)
+                    }
+                }
+
                 // Runner dot
                 Annotation("You", coordinate: viewModel.runnerCoordinate) {
                     Circle()
@@ -88,6 +95,9 @@ struct MapView: View {
                 }
             }
 
+            // POI layer toggle
+            // (future: add a filter button)
+
             // Follow toggle
             Button {
                 followRunner.toggle()
@@ -109,5 +119,32 @@ struct MapView: View {
                     .padding(.top, 12)
             }
         }
+    }
+
+    // MARK: - POI icon builder
+
+    @ViewBuilder
+    private func poiIcon(for poi: PointOfInterest) -> some View {
+        let (color, size): (Color, CGFloat) = {
+            switch poi.category {
+            case .toilet, .shower: return (.purple, 14)
+            case .firstAid:       return (.red, 16)
+            case .marshalPolice:  return (.orange, 13)
+            case .marshal:        return (.yellow.opacity(0.7), 11)
+            case .checkpoint:     return (.orange, 14)
+            case .parking:        return (.gray, 13)
+            case .music:          return (.pink, 14)
+            case .turnDirection:  return (.white.opacity(0.5), 10)
+            }
+        }()
+
+        Image(systemName: poi.sfSymbol)
+            .font(.system(size: size))
+            .foregroundStyle(color)
+            .background(
+                Circle()
+                    .fill(.black.opacity(0.5))
+                    .frame(width: size + 8, height: size + 8)
+            )
     }
 }

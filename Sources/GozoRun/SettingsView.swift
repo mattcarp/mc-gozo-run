@@ -45,6 +45,7 @@ struct SettingsView: View {
                     LabeledContent("Track points", value: "\(viewModel.routeCoordinates.count)")
                     LabeledContent("KM markers", value: "\(viewModel.kmMarkers.count)")
                     LabeledContent("Water stations", value: "\(viewModel.waterStations.count)")
+                    LabeledContent("Points of interest", value: "\(viewModel.pointsOfInterest.count)")
                     LabeledContent("Elevation range", value: "6m – 144m")
                 }
             }
