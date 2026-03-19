@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "mc-gozo-run",
+    name: "GozoRun",
     platforms: [
         .iOS(.v17)
     ],
@@ -17,6 +17,7 @@ let package = Package(
             name: "GozoRun",
             path: "Sources/GozoRun",
             resources: [
+                .process("route.gpx"),
                 .copy("Info.plist")
             ]
         )

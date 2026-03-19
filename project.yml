@@ -1,0 +1,31 @@
+name: GozoRun
+options:
+  bundleIdPrefix: com.mattcarp
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+settings:
+  SWIFT_VERSION: "5.10"
+  INFOPLIST_FILE: Sources/GozoRun/Info.plist
+targets:
+  GozoRun:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/GozoRun
+        excludes:
+          - Info.plist
+    resources:
+      - path: Sources/GozoRun/route.gpx
+      - path: Sources/GozoRun/Info.plist
+        buildPhase: none
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.mattcarp.gozorun
+      MARKETING_VERSION: "0.1.0"
+      CURRENT_PROJECT_VERSION: "1"
+      INFOPLIST_FILE: Sources/GozoRun/Info.plist
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: ""
+    info:
+      path: Sources/GozoRun/Info.plist

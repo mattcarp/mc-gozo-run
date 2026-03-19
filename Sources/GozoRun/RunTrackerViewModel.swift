@@ -67,29 +67,29 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
     // MARK: - GPX
 
     private func loadGPX() {
-        // Look for route.gpx in bundle or alongside the executable (for Package.swift builds)
-        let candidates: [URL] = [
-            Bundle.main.url(forResource: "route", withExtension: "gpx"),
-            // Package.swift: file sits at repo root, two directories up from .build
-            URL(fileURLWithPath: #filePath)
-                .deletingLastPathComponent()  // GozoRun/
-                .deletingLastPathComponent()  // Sources/
-                .deletingLastPathComponent()  // repo root
-                .appendingPathComponent("route.gpx")
-        ].compactMap { $0 }
+        // Try Bundle.main first (Xcode app), then Bundle.module (SPM)
+        let url = Bundle.main.url(forResource: "route", withExtension: "gpx")
+            ?? bundleModuleURL()
 
-        for url in candidates {
-            if FileManager.default.fileExists(atPath: url.path) {
-                let result = GPXParser.parse(url: url)
-                DispatchQueue.main.async {
-                    self.routeCoordinates = result.trackPoints
-                    self.routeElevations = result.elevations
-                    self.kmMarkers = result.kmMarkers
-                    self.waterStations = result.waterStations
-                }
-                return
-            }
+        guard let gpxURL = url, FileManager.default.fileExists(atPath: gpxURL.path) else {
+            return
         }
+        let result = GPXParser.parse(url: gpxURL)
+        DispatchQueue.main.async {
+            self.routeCoordinates = result.trackPoints
+            self.routeElevations = result.elevations
+            self.kmMarkers = result.kmMarkers
+            self.waterStations = result.waterStations
+        }
+    }
+
+    /// Bundle.module is only available in SPM builds; this avoids a compile error in Xcode projects
+    private func bundleModuleURL() -> URL? {
+        #if SWIFT_PACKAGE
+        return Bundle.module.url(forResource: "route", withExtension: "gpx")
+        #else
+        return nil
+        #endif
     }
 
     // MARK: - Tracking
