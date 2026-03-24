@@ -58,9 +58,10 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
         locationManager.activityType = .fitness
-        locationManager.allowsBackgroundLocationUpdates = true
         locationManager.pausesLocationUpdatesAutomatically = false
         locationManager.requestAlwaysAuthorization()
+        // allowsBackgroundLocationUpdates can only be set after authorization is granted
+        // and must not be set at init time — set it in startTracking() instead
 
         loadGPX()
     }
@@ -108,6 +109,10 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         voiceAlertManager.reset()
         isTracking = true
 
+        if locationManager.authorizationStatus == .authorizedAlways ||
+           locationManager.authorizationStatus == .authorizedWhenInUse {
+            locationManager.allowsBackgroundLocationUpdates = true
+        }
         locationManager.startUpdatingLocation()
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
