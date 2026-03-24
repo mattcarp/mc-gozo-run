@@ -59,9 +59,8 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
         locationManager.activityType = .fitness
         locationManager.pausesLocationUpdatesAutomatically = false
-        locationManager.requestAlwaysAuthorization()
-        // allowsBackgroundLocationUpdates can only be set after authorization is granted
-        // and must not be set at init time — set it in startTracking() instead
+        // Location authorization and background updates are deferred to startTracking()
+        // — requesting during init() crashes on iOS 18+ before the UI is presented
 
         loadGPX()
     }
@@ -98,6 +97,8 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
     // MARK: - Tracking
 
     func startTracking() {
+        // Request authorization now that the UI is on screen
+        locationManager.requestAlwaysAuthorization()
         startDate = Date()
         previousLocation = nil
         previousAltitude = nil
