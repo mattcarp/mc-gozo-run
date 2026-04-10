@@ -1,4 +1,6 @@
 import SwiftUI
+import UIKit
+import AVFoundation
 
 struct ContentView: View {
     @ObservedObject var runTracker: RunTrackerViewModel
@@ -113,6 +115,18 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(themeManager.selectedTheme.colorScheme)
+        .onChange(of: runTracker.liveTracking.cheerCount) { _, newCount in
+            if newCount > 0 {
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.success)
+                // Voice announcement
+                let synth = AVSpeechSynthesizer()
+                let utterance = AVSpeechUtterance(string: "Cheer received! Keep going Mattie!")
+                utterance.rate = 0.5
+                utterance.volume = 1.0
+                synth.speak(utterance)
+            }
+        }
         .sheet(isPresented: $showSpectator) {
             SpectatorView(viewModel: runTracker)
                 .environmentObject(themeManager)

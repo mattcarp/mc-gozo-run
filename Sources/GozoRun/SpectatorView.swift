@@ -27,7 +27,18 @@ struct SpectatorView: View {
     // For MVP, the "tracked runner" is derived directly from the shared ViewModel.
     // When CloudKit backend is wired: replace this with a @StateObject SpectatorManager.
     private var trackedRunner: TrackedRunner {
-        TrackedRunner(
+        // Prefer live data from Supabase; fall back to local ViewModel (same-device demo)
+        if let liveCoord = liveService.runnerPosition {
+            return TrackedRunner(
+                id: "runner-1",
+                name: "Mattie",
+                coordinate: liveCoord,
+                distanceKm: liveService.runnerDistanceKm,
+                paceFormatted: liveService.runnerPace,
+                lastUpdate: Date()
+            )
+        }
+        return TrackedRunner(
             id: "runner-1",
             name: "Mattie",
             coordinate: viewModel.runnerCoordinate,
@@ -41,6 +52,7 @@ struct SpectatorView: View {
         center: CLLocationCoordinate2D(latitude: 36.0560, longitude: 14.2500),
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
     ))
+    @StateObject private var liveService = LiveTrackingService(role: .spectator)
     @State private var cheerSent = false
     @State private var showCheerConfirmation = false
 
@@ -146,6 +158,8 @@ struct SpectatorView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
+            .onAppear { liveService.connect() }
+            .onDisappear { liveService.disconnect() }
             .navigationTitle("Spectator Mode")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

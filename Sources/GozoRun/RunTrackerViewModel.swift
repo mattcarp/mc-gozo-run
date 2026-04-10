@@ -15,6 +15,10 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
     @Published var voiceEnabled: Bool = true
     @Published var units: UnitSystem = .metric
     @Published var isTracking: Bool = false
+    @Published var cheerCount: Int = 0
+
+    // Live tracking service (publishes GPS to Supabase for spectators)
+    let liveTracking = LiveTrackingService(role: .runner)
 
     // GPX data
     @Published var routeCoordinates: [CLLocationCoordinate2D] = []
@@ -110,6 +114,10 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         voiceAlertManager.reset()
         isTracking = true
 
+        // Start live tracking for spectators
+        liveTracking.connect()
+        liveTracking.startPublishing(viewModel: self)
+
         if locationManager.authorizationStatus == .authorizedAlways ||
            locationManager.authorizationStatus == .authorizedWhenInUse {
             locationManager.allowsBackgroundLocationUpdates = true
@@ -128,6 +136,7 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         timer?.invalidate()
         timer = nil
         isTracking = false
+        liveTracking.disconnect()
     }
 
     // MARK: - Computed stats
