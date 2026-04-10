@@ -47,10 +47,10 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         let start = CLLocationCoordinate2D(latitude: 36.0505, longitude: 14.2678)
         runnerCoordinate = start
         spectatorLocations = [
-            SpectatorLocation(name: "Xagħra Square", coordinate: start),
-            SpectatorLocation(name: "Ramla Bay Junction",
+            SpectatorLocation(name: "Fiona", coordinate: start),
+            SpectatorLocation(name: "Donal",
                               coordinate: CLLocationCoordinate2D(latitude: 36.0592, longitude: 14.2820)),
-            SpectatorLocation(name: "Marsalforn Road",
+            SpectatorLocation(name: "Shelley",
                               coordinate: CLLocationCoordinate2D(latitude: 36.0738, longitude: 14.2581))
         ]
         super.init()

@@ -1,56 +1,56 @@
 import SwiftUI
 
 enum AppTheme: String, CaseIterable, Identifiable {
-    case darkCyan
-    case darkDefault
-    case lightCoral
-    case spectatorDark
+    case limestone
+    case mediterranean
+    case sunset
+    case terracotta
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
-        case .darkCyan: return "Dark Cyan"
-        case .darkDefault: return "Dark Default"
-        case .lightCoral: return "Light Coral"
-        case .spectatorDark: return "Spectator Dark"
+        case .limestone: return "Limestone"
+        case .mediterranean: return "Mediterranean"
+        case .sunset: return "Sunset"
+        case .terracotta: return "Terracotta"
         }
     }
 
     var accentColor: Color {
         switch self {
-        case .darkCyan: return Color(hex: "00BCD4")
-        case .darkDefault: return .blue
-        case .lightCoral: return Color(hex: "FF6B4A")
-        case .spectatorDark: return .mint
+        case .limestone: return Color(hex: "00BCD4")
+        case .mediterranean: return .blue
+        case .sunset: return Color(hex: "FF6B4A")
+        case .terracotta: return .mint
         }
     }
 
     var backgroundColor: Color {
         switch self {
-        case .darkCyan: return Color(.sRGB, red: 0.06, green: 0.12, blue: 0.14, opacity: 1)
-        case .darkDefault: return Color(.sRGB, red: 0.08, green: 0.08, blue: 0.10, opacity: 1)
-        case .lightCoral: return Color(.sRGB, red: 0.98, green: 0.95, blue: 0.93, opacity: 1)
-        case .spectatorDark: return Color(.sRGB, red: 0.05, green: 0.08, blue: 0.07, opacity: 1)
+        case .limestone: return Color(.sRGB, red: 0.06, green: 0.12, blue: 0.14, opacity: 1)
+        case .mediterranean: return Color(.sRGB, red: 0.08, green: 0.08, blue: 0.10, opacity: 1)
+        case .sunset: return Color(.sRGB, red: 0.98, green: 0.95, blue: 0.93, opacity: 1)
+        case .terracotta: return Color(.sRGB, red: 0.05, green: 0.08, blue: 0.07, opacity: 1)
         }
     }
 
     var colorScheme: ColorScheme {
         switch self {
-        case .lightCoral: return .light
+        case .sunset: return .light
         default: return .dark
         }
     }
 }
 
 final class ThemeManager: ObservableObject {
-    @AppStorage("selectedTheme") private var storedTheme = AppTheme.darkDefault.rawValue
-    @Published var selectedTheme: AppTheme = .darkDefault {
+    @AppStorage("selectedTheme") private var storedTheme = AppTheme.mediterranean.rawValue
+    @Published var selectedTheme: AppTheme = .mediterranean {
         didSet { storedTheme = selectedTheme.rawValue }
     }
 
     init() {
-        selectedTheme = AppTheme(rawValue: storedTheme) ?? .darkDefault
+        selectedTheme = AppTheme(rawValue: storedTheme) ?? .mediterranean
     }
 }
 

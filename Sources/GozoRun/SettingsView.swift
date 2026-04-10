@@ -101,10 +101,10 @@ private struct ThemeRow: View {
 
     private func themeSubtitle(_ t: AppTheme) -> String {
         switch t {
-        case .darkCyan:     return "Dark background · Cyan accent"
-        case .darkDefault:  return "Dark background · White accent"
-        case .lightCoral:   return "Light background · Coral accent"
-        case .spectatorDark: return "Dark background · Orange accent"
+        case .limestone:     return "Warm limestone · Teal accent"
+        case .mediterranean:  return "Cool sea · Blue accent"
+        case .sunset:   return "Golden glow · Coral accent"
+        case .terracotta: return "Bold earth · Mint accent"
         }
     }
 }

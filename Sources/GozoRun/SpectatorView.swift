@@ -29,7 +29,7 @@ struct SpectatorView: View {
     private var trackedRunner: TrackedRunner {
         TrackedRunner(
             id: "runner-1",
-            name: "Runner",
+            name: "Mattie",
             coordinate: viewModel.runnerCoordinate,
             distanceKm: viewModel.distanceMeters / 1_000,
             paceFormatted: viewModel.paceFormatted,

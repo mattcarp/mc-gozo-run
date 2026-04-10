@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "project": "GozoRun",
+    "race_date": "2026-04-26T07:30:00+02:00",
+    "updated": "2026-04-10"
+  },
+  "features": [
+    {
+      "id": "F001",
+      "name": "GPS Tracking + Stats HUD",
+      "description": "Real-time GPS with distance, time, pace, elevation gain",
+      "passes": true,
+      "completedAt": "2026-03-15"
+    },
+    {
+      "id": "F002",
+      "name": "Race Route Map",
+      "description": "664-point GPX route on satellite MapKit with KM markers, water stations, POIs",
+      "passes": true,
+      "completedAt": "2026-03-19"
+    },
+    {
+      "id": "F003",
+      "name": "Voice KM Alerts",
+      "description": "Proximity-triggered voice announcements at each KM marker",
+      "passes": true,
+      "completedAt": "2026-03-15"
+    },
+    {
+      "id": "F004",
+      "name": "4 Switchable Themes",
+      "description": "Dark Cyan, Dark Default, Light Coral, Spectator Dark",
+      "passes": true,
+      "completedAt": "2026-03-15",
+      "notes": "Theme names need renaming to match website: Limestone, Mediterranean, Sunset, Terracotta"
+    },
+    {
+      "id": "F005",
+      "name": "Elevation Profile Chart",
+      "description": "Swift Charts area+line chart with runner progress marker",
+      "passes": true,
+      "completedAt": "2026-03-15"
+    },
+    {
+      "id": "F006",
+      "name": "Race Countdown Timer",
+      "description": "Live countdown to April 26 07:30, switches to Race is LIVE",
+      "passes": true,
+      "completedAt": "2026-03-15"
+    },
+    {
+      "id": "F007",
+      "name": "Personalized Names",
+      "description": "Runner shows as Mattie, spectator mode shows Fiona",
+      "passes": false,
+      "priority": 1
+    },
+    {
+      "id": "F008",
+      "name": "Real-Time Spectator Tracking",
+      "description": "Live GPS position shared to spectators via backend (Supabase/Firebase)",
+      "passes": false,
+      "priority": 1
+    },
+    {
+      "id": "F009",
+      "name": "Cheer Delivery",
+      "description": "Spectator sends cheer, runner receives haptic tap in real-time",
+      "passes": false,
+      "priority": 2
+    },
+    {
+      "id": "F010",
+      "name": "Theme Rename",
+      "description": "Rename themes to Limestone, Mediterranean, Sunset, Terracotta",
+      "passes": false,
+      "priority": 3
+    },
+    {
+      "id": "F011",
+      "name": "Post-Race Completion Screen",
+      "description": "Finish line celebration with summary stats",
+      "passes": false,
+      "priority": 3
+    },
+    {
+      "id": "F012",
+      "name": "Shared Race Code",
+      "description": "Spectators join via code to track the runner",
+      "passes": false,
+      "priority": 2
+    }
+  ]
+}

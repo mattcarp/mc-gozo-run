@@ -65,7 +65,7 @@ struct MapView: View {
                 }
 
                 // Runner dot
-                Annotation("You", coordinate: viewModel.runnerCoordinate) {
+                Annotation("Mattie", coordinate: viewModel.runnerCoordinate) {
                     Circle()
                         .fill(.red)
                         .frame(width: 16, height: 16)
