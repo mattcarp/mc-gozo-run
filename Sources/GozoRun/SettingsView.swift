@@ -4,8 +4,8 @@ struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject var viewModel: RunTrackerViewModel
 
-    @AppStorage("supabase_url") private var supabaseURL = ""
-    @AppStorage("supabase_key") private var supabaseKey = ""
+    @AppStorage("supabase_url") private var supabaseURL = "https://cnmzahjpvxtnsvhnguqe.supabase.co"
+    @AppStorage("supabase_key") private var supabaseKey = "sb_publishable_IIYa7pcz7LXsIdke9RxQiw_DIzMA1-4"
     @AppStorage("race_code") private var raceCode = "GOZO2026" 
 
     var body: some View {

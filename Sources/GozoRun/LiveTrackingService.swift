@@ -15,8 +15,8 @@ final class LiveTrackingService: ObservableObject {
         static let shared: Config = {
             // These will be set via environment or a plist in release builds.
             // For development, hardcode or read from UserDefaults.
-            let url = UserDefaults.standard.string(forKey: "supabase_url") ?? ""
-            let key = UserDefaults.standard.string(forKey: "supabase_key") ?? ""
+            let url = UserDefaults.standard.string(forKey: "supabase_url") ?? "https://cnmzahjpvxtnsvhnguqe.supabase.co"
+            let key = UserDefaults.standard.string(forKey: "supabase_key") ?? "sb_publishable_IIYa7pcz7LXsIdke9RxQiw_DIzMA1-4"
             let code = UserDefaults.standard.string(forKey: "race_code") ?? "GOZO2026"
             return Config(supabaseURL: url, supabaseAnonKey: key, raceCode: code)
         }()
