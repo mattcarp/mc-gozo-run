@@ -2,93 +2,100 @@
   "_meta": {
     "project": "GozoRun",
     "race_date": "2026-04-26T07:30:00+02:00",
-    "updated": "2026-04-10"
+    "updated": "2026-04-10",
+    "notes": "passes = true means code-complete AND device-verified. code_complete = code exists but untested on device."
   },
   "features": [
     {
       "id": "F001",
       "name": "GPS Tracking + Stats HUD",
-      "description": "Real-time GPS with distance, time, pace, elevation gain",
       "passes": true,
       "completedAt": "2026-03-15"
     },
     {
       "id": "F002",
-      "name": "Race Route Map",
-      "description": "664-point GPX route on satellite MapKit with KM markers, water stations, POIs",
+      "name": "Race Route Map (664-point GPX)",
       "passes": true,
       "completedAt": "2026-03-19"
     },
     {
       "id": "F003",
       "name": "Voice KM Alerts",
-      "description": "Proximity-triggered voice announcements at each KM marker",
       "passes": true,
       "completedAt": "2026-03-15"
     },
     {
       "id": "F004",
       "name": "4 Switchable Themes",
-      "description": "Dark Cyan, Dark Default, Light Coral, Spectator Dark",
       "passes": true,
-      "completedAt": "2026-03-15",
-      "notes": "Theme names need renaming to match website: Limestone, Mediterranean, Sunset, Terracotta"
+      "completedAt": "2026-03-15"
     },
     {
       "id": "F005",
       "name": "Elevation Profile Chart",
-      "description": "Swift Charts area+line chart with runner progress marker",
       "passes": true,
       "completedAt": "2026-03-15"
     },
     {
       "id": "F006",
       "name": "Race Countdown Timer",
-      "description": "Live countdown to April 26 07:30, switches to Race is LIVE",
       "passes": true,
       "completedAt": "2026-03-15"
     },
     {
       "id": "F007",
       "name": "Personalized Names",
-      "description": "Runner shows as Mattie, spectator mode shows Fiona",
+      "code_complete": true,
       "passes": false,
-      "priority": 1
+      "priority": 1,
+      "blocker": "Needs device verification"
     },
     {
       "id": "F008",
       "name": "Real-Time Spectator Tracking",
-      "description": "Live GPS position shared to spectators via backend (Supabase/Firebase)",
+      "code_complete": true,
       "passes": false,
-      "priority": 1
+      "priority": 1,
+      "blocker": "Supabase project not provisioned"
     },
     {
       "id": "F009",
       "name": "Cheer Delivery",
-      "description": "Spectator sends cheer, runner receives haptic tap in real-time",
+      "code_complete": true,
       "passes": false,
-      "priority": 2
+      "priority": 2,
+      "blocker": "Blocked by F008 (Supabase)"
     },
     {
       "id": "F010",
-      "name": "Theme Rename",
-      "description": "Rename themes to Limestone, Mediterranean, Sunset, Terracotta",
+      "name": "Theme Rename (Limestone/Mediterranean/Sunset/Terracotta)",
+      "code_complete": true,
       "passes": false,
-      "priority": 3
+      "priority": 3,
+      "blocker": "Needs device verification"
     },
     {
       "id": "F011",
       "name": "Post-Race Completion Screen",
-      "description": "Finish line celebration with summary stats",
+      "code_complete": true,
       "passes": false,
-      "priority": 3
+      "priority": 3,
+      "blocker": "Needs device verification"
     },
     {
       "id": "F012",
-      "name": "Shared Race Code",
-      "description": "Spectators join via code to track the runner",
+      "name": "Shared Race Code (JoinRaceView)",
+      "code_complete": true,
       "passes": false,
-      "priority": 2
+      "priority": 2,
+      "blocker": "Needs end-to-end test with two devices"
     }
-  ]
+  ],
+  "infrastructure": {
+    "supabase_provisioned": false,
+    "testflight_configured": false,
+    "mac_mini_available": false,
+    "simulator_tested": false,
+    "device_tested": false
+  }
 }
