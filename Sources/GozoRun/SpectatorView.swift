@@ -53,6 +53,8 @@ struct SpectatorView: View {
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
     ))
     @StateObject private var liveService = LiveTrackingService(role: .spectator)
+    @State private var hasJoined = false
+    @AppStorage("spectator_name") private var spectatorName = "Fiona"
     @State private var cheerSent = false
     @State private var showCheerConfirmation = false
 

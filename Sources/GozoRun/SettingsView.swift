@@ -4,6 +4,10 @@ struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject var viewModel: RunTrackerViewModel
 
+    @AppStorage("supabase_url") private var supabaseURL = ""
+    @AppStorage("supabase_key") private var supabaseKey = ""
+    @AppStorage("race_code") private var raceCode = "GOZO2026" 
+
     var body: some View {
         NavigationStack {
             Form {
@@ -47,6 +51,33 @@ struct SettingsView: View {
                     LabeledContent("Water stations", value: "\(viewModel.waterStations.count)")
                     LabeledContent("Points of interest", value: "\(viewModel.pointsOfInterest.count)")
                     LabeledContent("Elevation range", value: "6m – 144m")
+                }
+
+                Section {
+                    TextField("Supabase URL", text: $supabaseURL)
+                        .textContentType(.URL)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                    SecureField("Supabase Anon Key", text: $supabaseKey)
+                    TextField("Race Code", text: $raceCode)
+                        .autocapitalization(.allCharacters)
+                        .disableAutocorrection(true)
+                } header: {
+                    Text("Live Tracking")
+                } footer: {
+                    if supabaseURL.isEmpty {
+                        Text("Enter your Supabase project URL to enable live spectator tracking.")
+                    } else {
+                        Label("Live tracking configured", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    }
+                }
+
+                Section {
+                    LabeledContent("Cheers received", value: "\(viewModel.liveTracking.cheerCount)")
+                    LabeledContent("Connection", value: viewModel.liveTracking.isConnected ? "Connected" : "Disconnected")
+                } header: {
+                    Text("Live Status")
                 }
             }
             .navigationTitle("Settings")

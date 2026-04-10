@@ -9,6 +9,7 @@ struct ContentView: View {
 
     @State private var hudExpanded = true
     @State private var showSpectator = false
+    @State private var showRaceComplete = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -126,6 +127,23 @@ struct ContentView: View {
                 utterance.volume = 1.0
                 synth.speak(utterance)
             }
+        }
+        
+        .onChange(of: runTracker.distanceMeters) { _, newDistance in
+            if newDistance >= 21_100 && runTracker.isTracking && !showRaceComplete {
+                runTracker.stopTracking()
+                showRaceComplete = true
+            }
+        }
+        .fullScreenCover(isPresented: $showRaceComplete) {
+            RaceCompleteView(
+                distance: runTracker.distanceFormatted,
+                time: runTracker.elapsedFormatted,
+                pace: runTracker.paceFormatted,
+                elevation: runTracker.elevationFormatted,
+                cheerCount: runTracker.liveTracking.cheerCount
+            )
+            .environmentObject(themeManager)
         }
         .sheet(isPresented: $showSpectator) {
             SpectatorView(viewModel: runTracker)
