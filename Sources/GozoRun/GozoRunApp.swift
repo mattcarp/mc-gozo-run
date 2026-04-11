@@ -13,38 +13,45 @@ struct GozoRunApp: App {
             year: 2026, month: 4, day: 26, hour: 7, minute: 30
         )) ?? Date()
         return RunSession(
-            raceName: "Gozo Half Marathon (Il-Girja t'Għawdex)",
+            raceName: "Gozo Half Marathon (Il-Girja t\u{2019}G\u{0127}awdex)",
             startDate: startDate,
             startCoordinate: CLLocationCoordinate2D(latitude: 36.050042, longitude: 14.264673),
             totalDistanceKm: 21.1
         )
     }()
 
+    private var launchInDemoMode: Bool {
+        CommandLine.arguments.contains("--demo") ||
+        UserDefaults.standard.bool(forKey: "launch_demo")
+    }
+
     var body: some Scene {
         WindowGroup {
-            TabView {
-                // Main tracker tab — full-screen map + HUD + countdown
-                ContentView(runTracker: runTracker, raceSession: raceSession)
+            if launchInDemoMode {
+                DemoModeView(viewModel: runTracker)
                     .environmentObject(themeManager)
-                    .tabItem { Label("Track", systemImage: "figure.run") }
+                    .preferredColorScheme(themeManager.selectedTheme.colorScheme)
+            } else {
+                TabView {
+                    ContentView(runTracker: runTracker, raceSession: raceSession)
+                        .environmentObject(themeManager)
+                        .tabItem { Label("Track", systemImage: "figure.run") }
 
-                // KM splits log
-                SplitsView(runTracker: runTracker)
-                    .environmentObject(themeManager)
-                    .tabItem { Label("Splits", systemImage: "list.number") }
+                    SplitsView(runTracker: runTracker)
+                        .environmentObject(themeManager)
+                        .tabItem { Label("Splits", systemImage: "list.number") }
 
-                // Spectator mode
-                SpectatorView(viewModel: runTracker)
-                    .environmentObject(themeManager)
-                    .tabItem { Label("Spectate", systemImage: "eye") }
+                    SpectatorView(viewModel: runTracker)
+                        .environmentObject(themeManager)
+                        .tabItem { Label("Spectate", systemImage: "eye") }
 
-                // Settings
-                SettingsView(viewModel: runTracker)
-                    .environmentObject(themeManager)
-                    .tabItem { Label("Settings", systemImage: "gearshape") }
+                    SettingsView(viewModel: runTracker)
+                        .environmentObject(themeManager)
+                        .tabItem { Label("Settings", systemImage: "gearshape") }
+                }
+                .tint(themeManager.selectedTheme.accentColor)
+                .preferredColorScheme(themeManager.selectedTheme.colorScheme)
             }
-            .tint(themeManager.selectedTheme.accentColor)
-            .preferredColorScheme(themeManager.selectedTheme.colorScheme)
         }
     }
 }

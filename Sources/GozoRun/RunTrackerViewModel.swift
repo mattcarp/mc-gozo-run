@@ -17,12 +17,11 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
     @Published var isTracking: Bool = false
     @Published var cheerCount: Int = 0
 
-    // Live tracking service (publishes GPS to Supabase for spectators)
     let liveTracking = LiveTrackingService(role: .runner)
 
     // GPX data
     @Published var routeCoordinates: [CLLocationCoordinate2D] = []
-    @Published var routeElevations: [Double] = []   // parallel array to routeCoordinates
+    @Published var routeElevations: [Double] = []
     @Published var kmMarkers: [KmMarker] = []
     @Published var waterStations: [WaterStation] = []
     @Published var pointsOfInterest: [PointOfInterest] = []
@@ -30,7 +29,7 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
     // MARK: - Private
 
     private let locationManager = CLLocationManager()
-    private let voiceAlertManager = VoiceAlertManager()
+    let voiceAlertManager = VoiceAlertManager()
     private var timer: Timer?
     private var startDate: Date?
     private var previousLocation: CLLocation?
@@ -63,8 +62,6 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
         locationManager.activityType = .fitness
         locationManager.pausesLocationUpdatesAutomatically = false
-        // Location authorization and background updates are deferred to startTracking()
-        // — requesting during init() crashes on iOS 18+ before the UI is presented
 
         loadGPX()
     }
@@ -72,7 +69,6 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
     // MARK: - GPX
 
     private func loadGPX() {
-        // Try Bundle.main first (Xcode app), then Bundle.module (SPM)
         let url = Bundle.main.url(forResource: "route", withExtension: "gpx")
             ?? bundleModuleURL()
 
@@ -89,7 +85,6 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         }
     }
 
-    /// Bundle.module is only available in SPM builds; this avoids a compile error in Xcode projects
     private func bundleModuleURL() -> URL? {
         #if SWIFT_PACKAGE
         return Bundle.module.url(forResource: "route", withExtension: "gpx")
@@ -101,7 +96,6 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
     // MARK: - Tracking
 
     func startTracking() {
-        // Request authorization now that the UI is on screen
         locationManager.requestAlwaysAuthorization()
         startDate = Date()
         previousLocation = nil
@@ -114,7 +108,8 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         voiceAlertManager.reset()
         isTracking = true
 
-        // Start live tracking for spectators
+        voiceAlertManager.announceRaceStart()
+
         liveTracking.connect()
         liveTracking.startPublishing(viewModel: self)
 
@@ -193,7 +188,6 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         }
         previousLocation = location
 
-        // Elevation gain
         if location.verticalAccuracy >= 0 {
             if let prevAlt = previousAltitude {
                 let delta = location.altitude - prevAlt
@@ -205,11 +199,29 @@ final class RunTrackerViewModel: NSObject, ObservableObject, CLLocationManagerDe
         updatePace()
         recordSplitIfNeeded()
 
-        // Voice alerts — proximity first, distance fallback
+        // Voice alerts: KM splits
         if !kmMarkers.isEmpty {
-            voiceAlertManager.checkProximity(to: location, kmMarkers: kmMarkers, elapsed: elapsedTime, enabled: voiceEnabled)
+            voiceAlertManager.checkProximity(
+                to: location,
+                kmMarkers: kmMarkers,
+                elapsed: elapsedTime,
+                enabled: voiceEnabled
+            )
         } else {
-            voiceAlertManager.announceSplitIfNeeded(distanceMeters: distanceMeters, elapsed: elapsedTime, enabled: voiceEnabled)
+            voiceAlertManager.announceSplitIfNeeded(
+                distanceMeters: distanceMeters,
+                elapsed: elapsedTime,
+                enabled: voiceEnabled
+            )
+        }
+
+        // Voice alerts: water stations
+        if !waterStations.isEmpty {
+            voiceAlertManager.checkWaterStations(
+                at: location,
+                stations: waterStations,
+                enabled: voiceEnabled
+            )
         }
     }
 

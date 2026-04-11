@@ -16,14 +16,21 @@ struct DemoModeView: View {
     @State private var currentKm = 0
     @State private var demoElapsed: TimeInterval = 0
     @State private var demoPace = "5:42 /km"
+    @State private var demoDistanceKm: Double = 0
+    @State private var showRaceComplete = false
 
-    private let speechSynth = AVSpeechSynthesizer()
-    private let lookAroundInterval = 15  // show Look Around every N points
-    private let pointDelay: TimeInterval = 0.8  // seconds between GPS points (fast for demo)
+    private let voiceCoach = VoiceAlertManager()
+    private let lookAroundInterval = 18
+    private let pointDelay: TimeInterval = 0.7
+
+    private let simulatedPaces = [
+        "5:42", "5:38", "5:45", "5:31", "5:55", "5:40", "5:33", "5:48",
+        "5:36", "5:44", "5:50", "5:35", "5:41", "5:39", "5:52", "5:37",
+        "5:46", "5:43", "5:34", "5:49", "5:40"
+    ]
 
     var body: some View {
         ZStack {
-            // Map background
             Map {
                 if !viewModel.routeCoordinates.isEmpty {
                     MapPolyline(coordinates: viewModel.routeCoordinates)
@@ -39,9 +46,7 @@ struct DemoModeView: View {
             }
             .mapStyle(.hybrid(elevation: .realistic))
 
-            // Overlay HUD
             VStack {
-                // Title bar
                 HStack {
                     VStack(alignment: .leading) {
                         Text("DEMO MODE")
@@ -64,7 +69,6 @@ struct DemoModeView: View {
 
                 Spacer()
 
-                // Look Around preview (slides in periodically)
                 if showLookAround, let scene = lookAroundScene {
                     LookAroundPreview(initialScene: scene)
                         .frame(height: 200)
@@ -90,9 +94,8 @@ struct DemoModeView: View {
                         ))
                 }
 
-                // Stats bar
                 HStack(spacing: 0) {
-                    demoStat("Distance", value: String(format: "%.1f km", Double(demoIndex) * 0.032))
+                    demoStat("Distance", value: String(format: "%.1f km", demoDistanceKm))
                     Divider().frame(height: 36)
                     demoStat("Time", value: formatDemoTime(demoElapsed))
                     Divider().frame(height: 36)
@@ -106,7 +109,6 @@ struct DemoModeView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
 
-                // Start / pause button
                 Button {
                     if demoRunning { pauseDemo() } else { startDemo() }
                 } label: {
@@ -126,6 +128,16 @@ struct DemoModeView: View {
             }
         }
         .onDisappear { stopDemo() }
+        .fullScreenCover(isPresented: $showRaceComplete) {
+            RaceCompleteView(
+                distance: String(format: "%.2f km", demoDistanceKm),
+                time: formatDemoTime(demoElapsed),
+                pace: demoPace,
+                elevation: "+312 m",
+                cheerCount: viewModel.liveTracking.cheerCount
+            )
+            .environmentObject(themeManager)
+        }
     }
 
     // MARK: - Demo control
@@ -135,33 +147,50 @@ struct DemoModeView: View {
         let coords = viewModel.routeCoordinates
         guard !coords.isEmpty else { return }
 
-        speak("Starting demo. Running the Gozo Half Marathon. Let's go Mattie!")
+        voiceCoach.announceRaceStart()
 
         demoTimer = Timer.scheduledTimer(withTimeInterval: pointDelay, repeats: true) { _ in
             guard demoIndex < coords.count else {
-                stopDemo()
-                speak("Race complete! Twenty-one point one kilometres through beautiful Gozo!")
+                finishDemo()
                 return
             }
 
             viewModel.runnerCoordinate = coords[demoIndex]
-            demoElapsed += 10.85  // simulated seconds per point (~2hrs / 664 points)
 
-            let newKm = Int(Double(demoIndex) * 21.1 / Double(coords.count))
-            if newKm > currentKm {
+            let progress = Double(demoIndex) / Double(coords.count)
+            demoDistanceKm = progress * 21.1
+            demoElapsed += 10.85
+
+            let newKm = Int(demoDistanceKm)
+            if newKm > currentKm && newKm <= 21 {
                 currentKm = newKm
-                let paces = ["5:42", "5:38", "5:45", "5:31", "5:55", "5:40", "5:33", "5:48", "5:36", "5:44",
-                              "5:50", "5:35", "5:41", "5:39", "5:52", "5:37", "5:46", "5:43", "5:34", "5:49", "5:40"]
-                demoPace = (currentKm <= paces.count) ? "\(paces[currentKm - 1]) /km" : "5:42 /km"
-                speak("Kilometre \(currentKm). Pace \(demoPace.replacingOccurrences(of: " /km", with: " per kilometre")).")
+                if currentKm <= simulatedPaces.count {
+                    demoPace = "\(simulatedPaces[currentKm - 1]) /km"
+                }
+                voiceCoach.announceSplitIfNeeded(
+                    distanceMeters: demoDistanceKm * 1000,
+                    elapsed: demoElapsed,
+                    enabled: true
+                )
             }
 
-            // Show Look Around every N points
             if demoIndex % lookAroundInterval == 0 && demoIndex > 0 {
-                Task { await loadLookAroundForDemo(at: coords[min(demoIndex + 20, coords.count - 1)]) }
+                let aheadIdx = min(demoIndex + 25, coords.count - 1)
+                Task { await loadLookAroundForDemo(at: coords[aheadIdx]) }
             }
 
             demoIndex += 1
+        }
+    }
+
+    private func finishDemo() {
+        stopDemo()
+        demoDistanceKm = 21.1
+        currentKm = 21
+        voiceCoach.announceRaceComplete(elapsed: demoElapsed)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            showRaceComplete = true
         }
     }
 
@@ -186,22 +215,12 @@ struct DemoModeView: View {
                     self.lookAroundScene = scene
                     withAnimation(.easeInOut(duration: 0.6)) { self.showLookAround = true }
                 }
-                try? await Task.sleep(nanoseconds: 5_000_000_000)  // show for 5s
+                try? await Task.sleep(nanoseconds: 6_000_000_000)
                 await MainActor.run {
                     withAnimation(.easeOut(duration: 0.4)) { self.showLookAround = false }
                 }
             }
         } catch { }
-    }
-
-    // MARK: - Speech
-
-    private func speak(_ text: String) {
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.rate = 0.48
-        utterance.volume = 1.0
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-GB")
-        speechSynth.speak(utterance)
     }
 
     // MARK: - Helpers

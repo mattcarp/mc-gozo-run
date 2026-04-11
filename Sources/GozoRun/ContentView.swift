@@ -13,11 +13,9 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Full-screen map
             MapView(viewModel: runTracker)
                 .ignoresSafeArea()
 
-            // Look Ahead street view (top left)
             VStack {
                 HStack {
                     LookAheadView(viewModel: runTracker)
@@ -29,7 +27,6 @@ struct ContentView: View {
                 Spacer()
             }
 
-            // Elevation chart (floating above HUD)
             VStack {
                 Spacer()
                 ElevationChartView(viewModel: runTracker)
@@ -38,9 +35,7 @@ struct ContentView: View {
                     .padding(.bottom, hudExpanded ? 320 : 80)
             }
 
-            // Stats HUD
             VStack(spacing: 0) {
-                // Drag handle / collapse toggle
                 Button {
                     withAnimation(.spring(response: 0.35)) {
                         hudExpanded.toggle()
@@ -58,13 +53,12 @@ struct ContentView: View {
 
                 if hudExpanded {
                     VStack(spacing: 12) {
-                        // Countdown / race header
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Il-Girja t'Għawdex")
+                                Text("Il-Girja t\u{2019}G\u{0127}awdex")
                                     .font(.headline)
                                     .foregroundStyle(.primary)
-                                Text("Gozo Half Marathon · 21.1 km")
+                                Text("Gozo Half Marathon \u{00B7} 21.1 km")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -75,7 +69,6 @@ struct ContentView: View {
 
                         Divider().opacity(0.3)
 
-                        // Stats grid
                         HStack(spacing: 0) {
                             StatCell(label: "Distance", value: runTracker.distanceFormatted)
                             Divider().frame(height: 40)
@@ -86,7 +79,6 @@ struct ContentView: View {
                             StatCell(label: "Elev +", value: runTracker.elevationFormatted)
                         }
 
-                        // Control buttons
                         HStack(spacing: 12) {
                             Button {
                                 if runTracker.isTracking {
@@ -132,19 +124,16 @@ struct ContentView: View {
             if newCount > 0 {
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.success)
-                // Voice announcement
-                let synth = AVSpeechSynthesizer()
-                let utterance = AVSpeechUtterance(string: "Cheer received! Keep going Mattie!")
-                utterance.rate = 0.5
-                utterance.volume = 1.0
-                synth.speak(utterance)
+                runTracker.voiceAlertManager.announceCheer()
             }
         }
-        
         .onChange(of: runTracker.distanceMeters) { _, newDistance in
             if newDistance >= 21_100 && runTracker.isTracking && !showRaceComplete {
+                runTracker.voiceAlertManager.announceRaceComplete(elapsed: runTracker.elapsedTime)
                 runTracker.stopTracking()
-                showRaceComplete = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    showRaceComplete = true
+                }
             }
         }
         .fullScreenCover(isPresented: $showRaceComplete) {
@@ -162,7 +151,6 @@ struct ContentView: View {
                 .environmentObject(themeManager)
         }
     }
-
 }
 
 // MARK: - Stat cell
