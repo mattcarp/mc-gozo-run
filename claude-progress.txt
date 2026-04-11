@@ -47,3 +47,54 @@ Duration: ~150m
 - Physical device testing (iPhone 16 + iPhone 15)
 - Website improvements (photos, countdown, download button)
 ---
+
+---
+Session: 2026-04-11 ~14:00-15:30 UTC
+Agent: Coding (Cursor, OpenClaude 2.4.9)
+Duration: ~90m
+
+## Summary
+- COMPLETED: Website polish (runfionarun.com)
+  - Added download toast (shows "Available race day - April 26th" instead of dead link)
+  - Added Look Ahead feature card with animated "New" badge
+  - Added subtle topographic cross pattern on hero background
+  - Committed: 83ef253, pushed to GitHub Pages
+  - NOTE: Remote already had dark mode + carousel (commits d46ff7d, 455ba85, 19a98c9)
+  
+- COMPLETED: Spectator flow verification (F012)
+  - Booted iPhone 17 Pro simulator (E04B9767) as spectator device
+  - Installed and launched GozoRun on both simulators
+  - Verified Supabase data flow: 6+ runner positions in gozo_live_positions
+  - Verified cheers: multiple cheers from Fiona in gozo_cheers
+  - Spectator app launched, location permission granted, map + route visible
+  - Backend data pipeline fully confirmed working
+
+- IN PROGRESS: Race completion test (F011)
+  - GPS simulation running on runner (68 waypoints at 150m/s)
+  - Need user to tap "Start" button on simulator (remote clicks not reaching due to window position changes)
+  - Once started, GPS sim will race through 21.1km in ~2-3 min triggering completion screen
+
+- BLOCKED: Physical device testing
+  - No iPhones connected to Mac Mini USB
+
+## Current Simulator State
+- iPhone 17 (1303FE06): BOOTED, app running, on Track tab, GPS sim active
+- iPhone 17 Pro (E04B9767): SHUTDOWN (was used for spectator test)
+- Runner window position: (154, 30) size 345x750
+- GPS simulation: 68 waypoints from route at 150m/s speed (may need restart)
+
+## Next Steps (in order)
+1. User taps "Start" on runner simulator -> watch distance climb to 21.1km -> verify completion screen (F011)
+2. Launch Demo Mode (Settings > Demo > Launch Demo Mode) for Fiona TV surprise
+3. Physical device testing when iPhone is connected
+
+## Window Position Issue
+Runner window moved from (467,35) to (154,30) when spectator sim was shut down.
+Click coordinates must be recalculated: Start button ~(240, 693) with window at (154, 30).
+Safest: have user manually tap Start.
+
+## Website Changes (runfionarun.com)
+- Commit 83ef253: download toast, Look Ahead card, hero texture
+- Site repo: github.com/mattcarp/runfionarun-site (GitHub Pages)
+- Live at runfionarun.com (deployment takes ~1 min after push)
+---
