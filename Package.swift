@@ -6,19 +6,13 @@ let package = Package(
     platforms: [
         .iOS(.v17)
     ],
-    products: [
-        .library(
-            name: "GozoRun",
-            targets: ["GozoRun"]
-        )
-    ],
     targets: [
-        .target(
+        .executableTarget(
             name: "GozoRun",
             path: "Sources/GozoRun",
+            exclude: ["Info.plist"],
             resources: [
-                .process("route.gpx"),
-                .copy("Info.plist")
+                .process("route.gpx")
             ]
         )
     ]
