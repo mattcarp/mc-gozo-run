@@ -1,100 +1,45 @@
-
 ---
-Session: 2026-04-11 ~10:30-13:00 UTC
+Session: 2026-04-11 14:30 UTC
 Agent: Coding (Cursor)
-Duration: ~150m
+Duration: ~45m
 
 ## Summary
-- Fixed Package.swift (executableTarget, exclude Info.plist) - build now works
-- Built and ran app on Mac Mini simulator (iPhone 17, ID: 1303FE06-2A9B-4EEE-A131-C6C2FBDAADF1)
-- Full simulator test: GPS tracking, splits, themes, elevation, countdown, Supabase publishing ALL PASS
-- Supabase live: confirmed positions publishing every 5s to gozo_live_positions table
-- Sent test cheer from Fiona - confirmed in gozo_cheers table
-- Built LookAheadView.swift: Apple Look Around street view 500m ahead of runner
-- Built DemoModeView.swift: auto-runs full route with voice alerts + cycling street views
-- Demo Mode accessible from Settings > Launch Demo Mode (perfect for TV screencast)
-- All committed and pushed: 7f5b123
+- MAJOR: Completely rewrote VoiceAlertManager.swift - transformed from robotic TTS to natural running coach
+  - Premium voice selection with fallback chain (British/Australian enhanced voices)
+  - AVAudioSession with audio ducking (plays over music/podcasts)
+  - Randomized natural conversational announcements
+  - Milestone celebrations at 5K, 10K, halfway, 15K, 18K, 20K, 21K
+  - Water station proximity alerts (250m radius)
+  - Cheer-received voice announcements
+  - Natural pace formatting ("five thirty per K" not "5 minutes, 30 seconds per kilometre")
+  - Race start and completion announcements
+- IMPROVED: DemoModeView.swift now uses VoiceAlertManager for consistent voice quality
+  - Auto-triggers race completion screen with confetti at 21.1km
+  - Uses improved natural voice for all announcements
+- IMPROVED: RaceCompleteView.swift with particle confetti animation (60 colored pieces)
+- IMPROVED: ContentView.swift uses VoiceAlertManager for cheer announcements and race completion
+- IMPROVED: RunTrackerViewModel.swift wires water station alerts + exposes VoiceAlertManager
+- ADDED: GozoRunApp.swift supports --demo launch argument for direct Demo Mode entry
+- ADDED: audio background mode in Info.plist for TTS during background tracking
+- Built, signed, and deployed to iPhone 17 simulator (confirmed running)
+- Committed: 0abf4a0 feat(voice): transform TTS from robotic to natural running coach
 
-## Key Info for Next Session
-- Mac Mini: mattcarp@Matts-Mac-mini.local (pw: fortuna, IP: 192.168.68.142)
-- Simulator ID: 1303FE06-2A9B-4EEE-A131-C6C2FBDAADF1 (iPhone 17)
-- Must run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer (after reboot)
-- Must recreate /tmp/make_app_bundle.sh after reboot (creates .app from binary)
-- Mac Mini has NO GitHub push access - push via workshop
-- Supabase URL: https://cnmzahjpvxtnsvhnguqe.supabase.co
-- Supabase key: sb_publishable_IIYa7pcz7LXsIdke9RxQiw_DIzMA1-4
+## Key Technical Details
+- Mac Mini: mattcarp@100.114.183.100 (Tailscale)
+- NUC/Workshop: sysop@100.118.26.94 (backup copy synced)
+- Simulator: iPhone 17 (1303FE06-2A9B-4EEE-A131-C6C2FBDAADF1)
 - Bundle ID: com.mattcarp.GozoRun
-
-## Build Steps on Mac Mini
-1. ssh mattcarp@Matts-Mac-mini.local
-2. cd /Users/mattcarp/projects/mc-gozo-run && git pull origin main
-3. xcodebuild -scheme GozoRun -destination "platform=iOS Simulator,id=1303FE06-2A9B-4EEE-A131-C6C2FBDAADF1" -derivedDataPath build build
-4. Create .app bundle (script in session notes)
-5. xcrun simctl install ... && xcrun simctl launch ...
-
-## UI Click Coordinates (CoreGraphics Python)
-- Window: (467,35) size 345x750
-- Start button: click(553, 687)
-- Tab Track: x=508, Tab Splits: x=594, Tab Settings: x=767, all at y=755
-
-## Test Results
-12/14 features PASSED in simulator. Remaining:
-- Race completion screen (needs 21.1km GPS sim)
-- Spectator flow (needs 2nd simulator/device)
+- Build: SPM project, manual .app bundle creation for simctl install
 
 ## Next Steps
-- Demo Mode for Fiona TV surprise
-- Physical device testing (iPhone 16 + iPhone 15)
-- Website improvements (photos, countdown, download button)
----
+- Git push (Mac Mini SSH key not registered with GitHub - Matt needs to add it or use credential helper)
+- Test TTS audio quality live (need to hear it on actual device or screen share)
+- Consider ElevenLabs integration for even higher quality (requires API key + network)
+- Physical device testing when iPhone is connected
+- Run Demo Mode to completion for Fiona TV surprise screencast
 
----
-Session: 2026-04-11 ~14:00-15:30 UTC
-Agent: Coding (Cursor, OpenClaude 2.4.9)
-Duration: ~90m
-
-## Summary
-- COMPLETED: Website polish (runfionarun.com)
-  - Added download toast (shows "Available race day - April 26th" instead of dead link)
-  - Added Look Ahead feature card with animated "New" badge
-  - Added subtle topographic cross pattern on hero background
-  - Committed: 83ef253, pushed to GitHub Pages
-  - NOTE: Remote already had dark mode + carousel (commits d46ff7d, 455ba85, 19a98c9)
-  
-- COMPLETED: Spectator flow verification (F012)
-  - Booted iPhone 17 Pro simulator (E04B9767) as spectator device
-  - Installed and launched GozoRun on both simulators
-  - Verified Supabase data flow: 6+ runner positions in gozo_live_positions
-  - Verified cheers: multiple cheers from Fiona in gozo_cheers
-  - Spectator app launched, location permission granted, map + route visible
-  - Backend data pipeline fully confirmed working
-
-- IN PROGRESS: Race completion test (F011)
-  - GPS simulation running on runner (68 waypoints at 150m/s)
-  - Need user to tap "Start" button on simulator (remote clicks not reaching due to window position changes)
-  - Once started, GPS sim will race through 21.1km in ~2-3 min triggering completion screen
-
-- BLOCKED: Physical device testing
-  - No iPhones connected to Mac Mini USB
-
-## Current Simulator State
-- iPhone 17 (1303FE06): BOOTED, app running, on Track tab, GPS sim active
-- iPhone 17 Pro (E04B9767): SHUTDOWN (was used for spectator test)
-- Runner window position: (154, 30) size 345x750
-- GPS simulation: 68 waypoints from route at 150m/s speed (may need restart)
-
-## Next Steps (in order)
-1. User taps "Start" on runner simulator -> watch distance climb to 21.1km -> verify completion screen (F011)
-2. Launch Demo Mode (Settings > Demo > Launch Demo Mode) for Fiona TV surprise
-3. Physical device testing when iPhone is connected
-
-## Window Position Issue
-Runner window moved from (467,35) to (154,30) when spectator sim was shut down.
-Click coordinates must be recalculated: Start button ~(240, 693) with window at (154, 30).
-Safest: have user manually tap Start.
-
-## Website Changes (runfionarun.com)
-- Commit 83ef253: download toast, Look Ahead card, hero texture
-- Site repo: github.com/mattcarp/runfionarun-site (GitHub Pages)
-- Live at runfionarun.com (deployment takes ~1 min after push)
+## Warnings
+- Mac Mini has no GitHub SSH authentication configured - commits are local only
+- "workshop" SSH alias points to NUC (Linux), NOT the Mac Mini
+- Premium TTS voices require download on device (first-run may use enhanced/compact fallback)
 ---

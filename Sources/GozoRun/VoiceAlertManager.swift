@@ -48,6 +48,16 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
     // MARK: - Voice Selection
 
     private func selectBestVoice() {
+        let allVoices = AVSpeechSynthesisVoice.speechVoices()
+        let englishVoices = allVoices.filter { $0.language.starts(with: "en") }
+
+        #if DEBUG
+        for v in englishVoices {
+            print("[Voice] \(v.language) | \(v.name) | \(v.quality.rawValue) | \(v.identifier)")
+        }
+        #endif
+
+        // Prefer enhanced/premium voices in order of naturalness
         let preferredIdentifiers = [
             "com.apple.voice.premium.en-GB.Malcolm",
             "com.apple.voice.premium.en-GB.Daniel",
@@ -57,24 +67,36 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
             "com.apple.voice.enhanced.en-GB.Daniel",
             "com.apple.voice.enhanced.en-AU.Karen",
             "com.apple.voice.enhanced.en-US.Samantha",
+            "com.apple.voice.enhanced.en-US.Joelle",
+            "com.apple.voice.enhanced.en-US.Noelle",
         ]
 
         for identifier in preferredIdentifiers {
             if let voice = AVSpeechSynthesisVoice(identifier: identifier) {
+                print("[Voice] Selected: \(voice.name) (\(voice.identifier))")
                 selectedVoice = voice
                 return
             }
         }
 
-        let enhancedEnglish = AVSpeechSynthesisVoice.speechVoices().first {
-            $0.language.starts(with: "en") && $0.quality == .enhanced
-        }
-        if let enhanced = enhancedEnglish {
+        // Fallback: any enhanced English voice
+        if let enhanced = englishVoices.first(where: { $0.quality == .enhanced }) {
+            print("[Voice] Fallback enhanced: \(enhanced.name)")
             selectedVoice = enhanced
             return
         }
 
+        // Fallback: best available Siri voice (British)
+        let siriGB = englishVoices.first { $0.identifier.contains("siri") && $0.language == "en-GB" }
+        if let siri = siriGB {
+            print("[Voice] Fallback Siri GB: \(siri.name)")
+            selectedVoice = siri
+            return
+        }
+
+        // Final fallback
         selectedVoice = AVSpeechSynthesisVoice(language: "en-GB")
+        print("[Voice] Using default en-GB voice")
     }
 
     // MARK: - Proximity-based KM detection
