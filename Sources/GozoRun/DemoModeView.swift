@@ -18,7 +18,9 @@ struct DemoModeView: View {
     @State private var demoPace = "5:42 /km"
     @State private var demoDistanceKm: Double = 0
     @State private var showRaceComplete = false
+    @State private var pulseRunner = false
 
+    @StateObject private var liveService = LiveTrackingService(role: .runner)
     private let voiceCoach = VoiceAlertManager()
     private let lookAroundInterval = 18
     private let pointDelay: TimeInterval = 0.7
@@ -38,8 +40,15 @@ struct DemoModeView: View {
                 }
                 Annotation("Mattie", coordinate: viewModel.runnerCoordinate) {
                     ZStack {
+                        Circle()
+                            .fill(.red.opacity(0.3))
+                            .frame(width: pulseRunner ? 40 : 24, height: pulseRunner ? 40 : 24)
+                            .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: pulseRunner)
                         Circle().fill(.red).frame(width: 20, height: 20)
                         Circle().stroke(.white, lineWidth: 3).frame(width: 20, height: 20)
+                        Image(systemName: "figure.run")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
                     }
                     .shadow(color: .red.opacity(0.5), radius: 8)
                 }
@@ -49,13 +58,39 @@ struct DemoModeView: View {
             VStack {
                 HStack {
                     VStack(alignment: .leading) {
-                        Text("DEMO MODE")
-                            .font(.caption.bold())
-                            .foregroundStyle(themeManager.selectedTheme.accentColor)
+                        HStack(spacing: 6) {
+                            Text("RUNNER VIEW")
+                                .font(.caption.bold())
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(themeManager.selectedTheme.accentColor)
+                                .clipShape(Capsule())
+                            if liveService.isConnected {
+                                HStack(spacing: 4) {
+                                    Circle().fill(.green).frame(width: 6, height: 6)
+                                    Text("LIVE")
+                                        .font(.system(size: 9, weight: .heavy))
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                        }
                         Text("Il-Girja t\u{2019}G\u{0127}awdex")
                             .font(.headline)
                     }
                     Spacer()
+                    if liveService.cheerCount > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "hands.clap.fill")
+                                .foregroundStyle(.yellow)
+                            Text("\(liveService.cheerCount)")
+                                .font(.subheadline.bold())
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                    }
                     Button("Close") { stopDemo(); dismiss() }
                         .font(.subheadline.bold())
                         .foregroundStyle(.white)
@@ -134,7 +169,7 @@ struct DemoModeView: View {
                 time: formatDemoTime(demoElapsed),
                 pace: demoPace,
                 elevation: "+312 m",
-                cheerCount: viewModel.liveTracking.cheerCount
+                cheerCount: liveService.cheerCount
             )
             .environmentObject(themeManager)
         }
@@ -144,9 +179,11 @@ struct DemoModeView: View {
 
     private func startDemo() {
         demoRunning = true
+        pulseRunner = true
         let coords = viewModel.routeCoordinates
         guard !coords.isEmpty else { return }
 
+        liveService.connect()
         voiceCoach.announceRaceStart()
 
         demoTimer = Timer.scheduledTimer(withTimeInterval: pointDelay, repeats: true) { _ in
@@ -174,6 +211,16 @@ struct DemoModeView: View {
                 )
             }
 
+            // Publish position to Supabase for spectators
+            if demoIndex % 3 == 0 {
+                liveService.publishPosition(
+                    coordinate: coords[demoIndex],
+                    distanceKm: demoDistanceKm,
+                    pace: demoPace,
+                    elapsed: demoElapsed
+                )
+            }
+
             if demoIndex % lookAroundInterval == 0 && demoIndex > 0 {
                 let aheadIdx = min(demoIndex + 25, coords.count - 1)
                 Task { await loadLookAroundForDemo(at: coords[aheadIdx]) }
@@ -189,6 +236,13 @@ struct DemoModeView: View {
         currentKm = 21
         voiceCoach.announceRaceComplete(elapsed: demoElapsed)
 
+        liveService.publishPosition(
+            coordinate: viewModel.runnerCoordinate,
+            distanceKm: 21.1,
+            pace: demoPace,
+            elapsed: demoElapsed
+        )
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
             showRaceComplete = true
         }
@@ -201,8 +255,10 @@ struct DemoModeView: View {
 
     private func stopDemo() {
         demoRunning = false
+        pulseRunner = false
         demoTimer?.invalidate()
         demoTimer = nil
+        liveService.disconnect()
     }
 
     // MARK: - Look Around
