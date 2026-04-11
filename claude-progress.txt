@@ -1,0 +1,49 @@
+
+---
+Session: 2026-04-11 ~10:30-13:00 UTC
+Agent: Coding (Cursor)
+Duration: ~150m
+
+## Summary
+- Fixed Package.swift (executableTarget, exclude Info.plist) - build now works
+- Built and ran app on Mac Mini simulator (iPhone 17, ID: 1303FE06-2A9B-4EEE-A131-C6C2FBDAADF1)
+- Full simulator test: GPS tracking, splits, themes, elevation, countdown, Supabase publishing ALL PASS
+- Supabase live: confirmed positions publishing every 5s to gozo_live_positions table
+- Sent test cheer from Fiona - confirmed in gozo_cheers table
+- Built LookAheadView.swift: Apple Look Around street view 500m ahead of runner
+- Built DemoModeView.swift: auto-runs full route with voice alerts + cycling street views
+- Demo Mode accessible from Settings > Launch Demo Mode (perfect for TV screencast)
+- All committed and pushed: 7f5b123
+
+## Key Info for Next Session
+- Mac Mini: mattcarp@Matts-Mac-mini.local (pw: fortuna, IP: 192.168.68.142)
+- Simulator ID: 1303FE06-2A9B-4EEE-A131-C6C2FBDAADF1 (iPhone 17)
+- Must run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer (after reboot)
+- Must recreate /tmp/make_app_bundle.sh after reboot (creates .app from binary)
+- Mac Mini has NO GitHub push access - push via workshop
+- Supabase URL: https://cnmzahjpvxtnsvhnguqe.supabase.co
+- Supabase key: sb_publishable_IIYa7pcz7LXsIdke9RxQiw_DIzMA1-4
+- Bundle ID: com.mattcarp.GozoRun
+
+## Build Steps on Mac Mini
+1. ssh mattcarp@Matts-Mac-mini.local
+2. cd /Users/mattcarp/projects/mc-gozo-run && git pull origin main
+3. xcodebuild -scheme GozoRun -destination "platform=iOS Simulator,id=1303FE06-2A9B-4EEE-A131-C6C2FBDAADF1" -derivedDataPath build build
+4. Create .app bundle (script in session notes)
+5. xcrun simctl install ... && xcrun simctl launch ...
+
+## UI Click Coordinates (CoreGraphics Python)
+- Window: (467,35) size 345x750
+- Start button: click(553, 687)
+- Tab Track: x=508, Tab Splits: x=594, Tab Settings: x=767, all at y=755
+
+## Test Results
+12/14 features PASSED in simulator. Remaining:
+- Race completion screen (needs 21.1km GPS sim)
+- Spectator flow (needs 2nd simulator/device)
+
+## Next Steps
+- Demo Mode for Fiona TV surprise
+- Physical device testing (iPhone 16 + iPhone 15)
+- Website improvements (photos, countdown, download button)
+---
