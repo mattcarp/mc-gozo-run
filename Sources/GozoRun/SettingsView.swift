@@ -4,6 +4,8 @@ struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject var viewModel: RunTrackerViewModel
 
+    @State private var showDemoMode = false
+
     @AppStorage("supabase_url") private var supabaseURL = "https://cnmzahjpvxtnsvhnguqe.supabase.co"
     @AppStorage("supabase_key") private var supabaseKey = "sb_publishable_IIYa7pcz7LXsIdke9RxQiw_DIzMA1-4"
     @AppStorage("race_code") private var raceCode = "GOZO2026" 
@@ -54,6 +56,20 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Button {
+                        showDemoMode = true
+                    } label: {
+                        Label("Launch Demo Mode", systemImage: "play.display")
+                            .font(.headline)
+                            .foregroundStyle(themeManager.selectedTheme.accentColor)
+                    }
+                } header: {
+                    Text("Demo")
+                } footer: {
+                    Text("Runs the full race route automatically with voice alerts and street-level previews. Perfect for showing on a TV.")
+                }
+
+                Section {
                     TextField("Supabase URL", text: $supabaseURL)
                         .textContentType(.URL)
                         .autocapitalization(.none)
@@ -81,6 +97,10 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .fullScreenCover(isPresented: $showDemoMode) {
+                DemoModeView(viewModel: viewModel)
+                    .environmentObject(themeManager)
+            }
         }
     }
 }

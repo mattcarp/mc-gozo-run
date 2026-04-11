@@ -17,6 +17,18 @@ struct ContentView: View {
             MapView(viewModel: runTracker)
                 .ignoresSafeArea()
 
+            // Look Ahead street view (top left)
+            VStack {
+                HStack {
+                    LookAheadView(viewModel: runTracker)
+                        .environmentObject(themeManager)
+                        .padding(.leading, 12)
+                        .padding(.top, 60)
+                    Spacer()
+                }
+                Spacer()
+            }
+
             // Elevation chart (floating above HUD)
             VStack {
                 Spacer()
