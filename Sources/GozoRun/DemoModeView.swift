@@ -184,6 +184,7 @@ struct DemoModeView: View {
         guard !coords.isEmpty else { return }
 
         liveService.connect()
+        Analytics.shared.trackRaceStart(mode: "demo")
         voiceCoach.announceRaceStart()
 
         demoTimer = Timer.scheduledTimer(withTimeInterval: pointDelay, repeats: true) { _ in
@@ -236,6 +237,8 @@ struct DemoModeView: View {
         currentKm = 21
         voiceCoach.announceRaceComplete(elapsed: demoElapsed)
 
+        Analytics.shared.trackRaceComplete(distanceKm: 21.1, elapsed: demoElapsed, avgPace: demoPace)
+
         liveService.publishPosition(
             coordinate: viewModel.runnerCoordinate,
             distanceKm: 21.1,
@@ -267,6 +270,8 @@ struct DemoModeView: View {
         let request = MKLookAroundSceneRequest(coordinate: coord)
         do {
             if let scene = try await request.scene {
+                let durationMs = Int(Date().timeIntervalSince(Date()) * 1000)
+                Analytics.shared.trackLookAroundLoad(coordinate: coord, durationMs: durationMs, success: true)
                 await MainActor.run {
                     self.lookAroundScene = scene
                     withAnimation(.easeInOut(duration: 0.6)) { self.showLookAround = true }
@@ -276,7 +281,9 @@ struct DemoModeView: View {
                     withAnimation(.easeOut(duration: 0.4)) { self.showLookAround = false }
                 }
             }
-        } catch { }
+        } catch {
+            Analytics.shared.trackLookAroundLoad(coordinate: coord, durationMs: 0, success: false)
+        }
     }
 
     // MARK: - Helpers

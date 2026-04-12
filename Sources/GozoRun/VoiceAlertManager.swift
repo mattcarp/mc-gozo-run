@@ -41,7 +41,7 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
             try session.setActive(true)
             isSessionConfigured = true
         } catch {
-            // Speech still works with default session
+            Analytics.shared.trackVoiceError("Audio session config failed: \(error.localizedDescription)")
         }
     }
 
@@ -57,7 +57,6 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
         }
         #endif
 
-        // Prefer enhanced/premium voices in order of naturalness
         let preferredIdentifiers = [
             "com.apple.voice.premium.en-GB.Malcolm",
             "com.apple.voice.premium.en-GB.Daniel",
@@ -73,30 +72,27 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
 
         for identifier in preferredIdentifiers {
             if let voice = AVSpeechSynthesisVoice(identifier: identifier) {
-                print("[Voice] Selected: \(voice.name) (\(voice.identifier))")
                 selectedVoice = voice
+                Analytics.shared.trackVoiceSelection(voiceId: voice.identifier, quality: "premium/enhanced")
                 return
             }
         }
 
-        // Fallback: any enhanced English voice
         if let enhanced = englishVoices.first(where: { $0.quality == .enhanced }) {
-            print("[Voice] Fallback enhanced: \(enhanced.name)")
             selectedVoice = enhanced
+            Analytics.shared.trackVoiceSelection(voiceId: enhanced.identifier, quality: "enhanced-fallback")
             return
         }
 
-        // Fallback: best available Siri voice (British)
         let siriGB = englishVoices.first { $0.identifier.contains("siri") && $0.language == "en-GB" }
         if let siri = siriGB {
-            print("[Voice] Fallback Siri GB: \(siri.name)")
             selectedVoice = siri
+            Analytics.shared.trackVoiceSelection(voiceId: siri.identifier, quality: "siri-fallback")
             return
         }
 
-        // Final fallback
         selectedVoice = AVSpeechSynthesisVoice(language: "en-GB")
-        print("[Voice] Using default en-GB voice")
+        Analytics.shared.trackVoiceSelection(voiceId: "default-en-GB", quality: "default")
     }
 
     // MARK: - Proximity-based KM detection
@@ -116,6 +112,12 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
             )
             if location.distance(from: markerLocation) <= proximityRadiusMeters {
                 announcedKilometers.insert(marker.kilometer)
+                Analytics.shared.trackKmSplit(
+                    km: marker.kilometer,
+                    elapsed: elapsed,
+                    pace: formatPaceNatural(elapsed: elapsed, kilometer: marker.kilometer),
+                    gpsAccuracy: location.horizontalAccuracy
+                )
                 announceKilometer(marker.kilometer, elapsed: elapsed)
                 break
             }
@@ -129,6 +131,12 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
         let kilometer = Int(distanceMeters / 1_000)
         guard kilometer > 0, !announcedKilometers.contains(kilometer) else { return }
         announcedKilometers.insert(kilometer)
+        Analytics.shared.trackKmSplit(
+            km: kilometer,
+            elapsed: elapsed,
+            pace: formatPaceNatural(elapsed: elapsed, kilometer: kilometer),
+            gpsAccuracy: -1
+        )
         announceKilometer(kilometer, elapsed: elapsed)
     }
 
@@ -144,6 +152,7 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
             )
             if location.distance(from: stationLoc) <= waterStationAlertRadius {
                 announcedWaterStations.insert(station.id)
+                Analytics.shared.trackVoiceAlert(type: "water_station", km: 0, message: "Water station alert")
                 announceWaterStation()
                 break
             }
@@ -167,12 +176,14 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
                 "Your fans are watching! Keep pushing!",
             ]
         }
+        Analytics.shared.trackVoiceAlert(type: "cheer", km: 0, message: name ?? "anonymous")
         speak(pickRandom(phrases), priority: false)
     }
 
     // MARK: - Race Start
 
     func announceRaceStart() {
+        Analytics.shared.trackVoiceAlert(type: "race_start", km: 0, message: "Race start announcement")
         speak("Let's go! The Gozo Half Marathon starts now. Enjoy every kilometre of this beautiful island.", priority: true)
     }
 
@@ -180,6 +191,7 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
 
     func announceRaceComplete(elapsed: TimeInterval) {
         let timeStr = formatTimeNatural(elapsed)
+        Analytics.shared.trackVoiceAlert(type: "race_complete", km: 21, message: "Finished in \(timeStr)")
         speak(
             "You did it! Twenty-one point one kilometres through beautiful Gozo! " +
             "You finished in \(timeStr). What an incredible achievement. " +
@@ -264,6 +276,7 @@ final class VoiceAlertManager: NSObject, AVSpeechSynthesizerDelegate {
             text = pickRandom(regularKmPhrases(km: km, pace: paceStr))
         }
 
+        Analytics.shared.trackVoiceAlert(type: "km_announcement", km: km, message: text)
         speak(text)
     }
 
