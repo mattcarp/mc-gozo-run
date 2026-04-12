@@ -5,15 +5,17 @@ struct SettingsView: View {
     @ObservedObject var viewModel: RunTrackerViewModel
 
     @State private var showDemoMode = false
+    @State private var precacheProgress: (Int, Int)?
+    @State private var isPrecaching = false
 
     @AppStorage("supabase_url") private var supabaseURL = "https://cnmzahjpvxtnsvhnguqe.supabase.co"
     @AppStorage("supabase_key") private var supabaseKey = "sb_publishable_IIYa7pcz7LXsIdke9RxQiw_DIzMA1-4"
-    @AppStorage("race_code") private var raceCode = "GOZO2026" 
+    @AppStorage("race_code") private var raceCode = "GOZO2026"
+    @AppStorage("google_streetview_key") private var streetViewKey = ""
 
     var body: some View {
         NavigationStack {
             Form {
-                // Theme picker with previews
                 Section {
                     ForEach(AppTheme.allCases) { theme in
                         ThemeRow(theme: theme, isSelected: themeManager.selectedTheme == theme) {
@@ -44,7 +46,7 @@ struct SettingsView: View {
                     LabeledContent("Distance", value: "21.1 km")
                     LabeledContent("Date", value: "26 April 2026")
                     LabeledContent("Start", value: "07:30 Malta Time")
-                    LabeledContent("Location", value: "Xagħra Square, Gozo")
+                    LabeledContent("Location", value: "Xaghra Square, Gozo")
                 }
 
                 Section("Route") {
@@ -53,6 +55,50 @@ struct SettingsView: View {
                     LabeledContent("Water stations", value: "\(viewModel.waterStations.count)")
                     LabeledContent("Points of interest", value: "\(viewModel.pointsOfInterest.count)")
                     LabeledContent("Elevation range", value: "6m – 144m")
+                }
+
+                Section {
+                    SecureField("Google Street View API Key", text: $streetViewKey)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+
+                    Button {
+                        Task { await precacheStreetView() }
+                    } label: {
+                        HStack {
+                            Label(
+                                isPrecaching ? "Downloading..." : "Pre-cache Route Imagery",
+                                systemImage: isPrecaching ? "arrow.down.circle" : "photo.on.rectangle.angled"
+                            )
+                            .font(.headline)
+                            .foregroundStyle(streetViewKey.isEmpty ? .secondary : themeManager.selectedTheme.accentColor)
+
+                            Spacer()
+
+                            if let (done, total) = precacheProgress {
+                                Text("\(done)/\(total)")
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .disabled(streetViewKey.isEmpty || isPrecaching || viewModel.routeCoordinates.isEmpty)
+
+                    if isPrecaching, let (done, total) = precacheProgress {
+                        ProgressView(value: Double(done), total: Double(total))
+                            .tint(themeManager.selectedTheme.accentColor)
+                    }
+                } header: {
+                    Text("Street View (Look Ahead)")
+                } footer: {
+                    if streetViewKey.isEmpty {
+                        Text("Add your Google Maps API key to enable street-level previews. Pre-cache the night before the race for offline use.")
+                    } else if let (done, total) = precacheProgress, done == total {
+                        Label("\(total) images cached — ready for race day", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("Pre-caching downloads ~100 street view images (about 15MB). Run this on Wi-Fi the night before.")
+                    }
                 }
 
                 Section {
@@ -103,6 +149,23 @@ struct SettingsView: View {
             }
         }
     }
+
+    private func precacheStreetView() async {
+        isPrecaching = true
+        Analytics.shared.track("precache_started", properties: ["route_points": viewModel.routeCoordinates.count])
+
+        await StreetViewCache.shared.precacheRoute(
+            coordinates: viewModel.routeCoordinates,
+            intervalMeters: 200
+        ) { done, total in
+            DispatchQueue.main.async {
+                self.precacheProgress = (done, total)
+            }
+        }
+
+        isPrecaching = false
+        Analytics.shared.track("precache_complete", properties: ["images": precacheProgress?.1 ?? 0])
+    }
 }
 
 // MARK: - Theme Row
@@ -115,7 +178,6 @@ private struct ThemeRow: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: 14) {
-                // Colour swatch
                 RoundedRectangle(cornerRadius: 8)
                     .fill(theme.backgroundColor)
                     .frame(width: 44, height: 44)

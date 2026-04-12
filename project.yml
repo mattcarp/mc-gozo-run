@@ -21,11 +21,11 @@ targets:
       - path: Sources/GozoRun/Info.plist
         buildPhase: none
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.mattcarp.gozorun
-      MARKETING_VERSION: "0.1.0"
-      CURRENT_PROJECT_VERSION: "1"
+      PRODUCT_BUNDLE_IDENTIFIER: com.mattcarp.GozoRun
+      MARKETING_VERSION: "0.3.0"
+      CURRENT_PROJECT_VERSION: "5"
       INFOPLIST_FILE: Sources/GozoRun/Info.plist
       CODE_SIGN_STYLE: Automatic
-      DEVELOPMENT_TEAM: ""
+      DEVELOPMENT_TEAM: 4AHG5FW789
     info:
       path: Sources/GozoRun/Info.plist

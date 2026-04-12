@@ -11,8 +11,8 @@ struct DemoModeView: View {
     @State private var demoRunning = false
     @State private var demoIndex = 0
     @State private var demoTimer: Timer?
-    @State private var lookAroundScene: MKLookAroundScene?
-    @State private var showLookAround = false
+    @State private var streetViewImage: UIImage?
+    @State private var showStreetView = false
     @State private var currentKm = 0
     @State private var demoElapsed: TimeInterval = 0
     @State private var demoPace = "5:42 /km"
@@ -104,8 +104,10 @@ struct DemoModeView: View {
 
                 Spacer()
 
-                if showLookAround, let scene = lookAroundScene {
-                    LookAroundPreview(initialScene: scene)
+                if showStreetView, let image = streetViewImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
                         .frame(height: 200)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .padding(.horizontal, 16)
@@ -224,7 +226,7 @@ struct DemoModeView: View {
 
             if demoIndex % lookAroundInterval == 0 && demoIndex > 0 {
                 let aheadIdx = min(demoIndex + 25, coords.count - 1)
-                Task { await loadLookAroundForDemo(at: coords[aheadIdx]) }
+                Task { await loadStreetViewForDemo(at: coords[aheadIdx], from: coords[demoIndex]) }
             }
 
             demoIndex += 1
@@ -264,25 +266,55 @@ struct DemoModeView: View {
         liveService.disconnect()
     }
 
-    // MARK: - Look Around
+    // MARK: - Street View
 
-    private func loadLookAroundForDemo(at coord: CLLocationCoordinate2D) async {
-        let request = MKLookAroundSceneRequest(coordinate: coord)
-        do {
-            if let scene = try await request.scene {
-                let durationMs = Int(Date().timeIntervalSince(Date()) * 1000)
-                Analytics.shared.trackLookAroundLoad(coordinate: coord, durationMs: durationMs, success: true)
-                await MainActor.run {
-                    self.lookAroundScene = scene
-                    withAnimation(.easeInOut(duration: 0.6)) { self.showLookAround = true }
-                }
-                try? await Task.sleep(nanoseconds: 6_000_000_000)
-                await MainActor.run {
-                    withAnimation(.easeOut(duration: 0.4)) { self.showLookAround = false }
-                }
+    private func loadStreetViewForDemo(at coord: CLLocationCoordinate2D, from runner: CLLocationCoordinate2D) async {
+        let start = Date()
+
+        // Calculate heading from runner toward the ahead point
+        let dLon = (coord.longitude - runner.longitude) * .pi / 180
+        let lat1 = runner.latitude * .pi / 180
+        let lat2 = coord.latitude * .pi / 180
+        let y = sin(dLon) * cos(lat2)
+        let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
+        let heading = (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+
+        // Try cache first
+        if let cached = StreetViewCache.shared.image(for: coord) {
+            await MainActor.run {
+                self.streetViewImage = cached
+                withAnimation(.easeInOut(duration: 0.6)) { self.showStreetView = true }
             }
-        } catch {
-            Analytics.shared.trackLookAroundLoad(coordinate: coord, durationMs: 0, success: false)
+            try? await Task.sleep(nanoseconds: 6_000_000_000)
+            await MainActor.run {
+                withAnimation(.easeOut(duration: 0.4)) { self.showStreetView = false }
+            }
+            return
+        }
+
+        // Fetch from API
+        guard let image = await StreetViewService.shared.fetchImage(
+            coordinate: coord,
+            heading: heading,
+            size: "600x300",
+            fov: 100
+        ) else {
+            let durationMs = Int(Date().timeIntervalSince(start) * 1000)
+            Analytics.shared.trackLookAroundLoad(coordinate: coord, durationMs: durationMs, success: false)
+            return
+        }
+
+        let durationMs = Int(Date().timeIntervalSince(start) * 1000)
+        Analytics.shared.trackLookAroundLoad(coordinate: coord, durationMs: durationMs, success: true)
+        StreetViewCache.shared.store(image: image, for: coord)
+
+        await MainActor.run {
+            self.streetViewImage = image
+            withAnimation(.easeInOut(duration: 0.6)) { self.showStreetView = true }
+        }
+        try? await Task.sleep(nanoseconds: 6_000_000_000)
+        await MainActor.run {
+            withAnimation(.easeOut(duration: 0.4)) { self.showStreetView = false }
         }
     }
 
